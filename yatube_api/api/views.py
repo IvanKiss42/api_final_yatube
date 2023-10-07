@@ -21,7 +21,7 @@ class PostViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         if self.request.data.get('group'):
             group_id = self.request.data.get('group')
-            group = Group.objects.get(id=group_id)
+            group = get_object_or_404(Group, id=group_id)
             serializer.save(author=self.request.user,
                             group=group)
         else:
@@ -35,15 +35,14 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         post_id = self.kwargs.get('post_id')
         get_object_or_404(Post, id=post_id)
-        new_queryset = Comment.objects.filter(post=post_id)
-        return new_queryset
+        return Comment.objects.filter(post=post_id)
 
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
         post = get_object_or_404(Post, id=post_id)
-        if serializer.is_valid():
-            serializer.save(author=self.request.user,
-                            post=post)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(author=self.request.user,
+                        post=post)
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
@@ -58,19 +57,11 @@ class FollowViewSet(viewsets.ModelViewSet):
     search_fields = ('following__username',)
 
     def get_queryset(self):
-        new_queryset = Follow.objects.filter(user=self.request.user)
-        return new_queryset
+        return Follow.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        if serializer.is_valid(raise_exception=True):
-            following_name = self.request.data.get('following')
-            if type(following_name) is str:
-                following = User.objects.get(username=following_name)
-            elif type(following_name) is int:
-                following = User.objects.get(id=following_name)
-            else:
-                raise NameError(
-                    f'following name: {following_name} - and it is invalid'
-                )
-            serializer.save(user=self.request.user,
-                            following=following)
+        serializer.is_valid(raise_exception=True)
+        following_name = self.request.data.get('following')
+        following = User.objects.get(username=following_name)
+        serializer.save(user=self.request.user,
+                        following=following)
