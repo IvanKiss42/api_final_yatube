@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField, PrimaryKeyRelatedField
-# from rest_framework.validators import UniqueTogetherValidator
 
 from posts.models import Comment, Post, Group, Follow
 
@@ -19,7 +18,6 @@ class GroupSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     author = SlugRelatedField(slug_field='username', read_only=True)
-    group = PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         fields = '__all__'
@@ -44,15 +42,7 @@ class FollowSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(),
         required=True
     )
-    """
-    С ним тесты не работают
-    validators = [
-        UniqueTogetherValidator(
-            queryset=Follow.objects.all(),
-            fields=['user', 'following']
-        )
-    ]
-    """
+
     class Meta:
         fields = ('user', 'following')
         model = Follow

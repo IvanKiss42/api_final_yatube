@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import viewsets, filters
 from rest_framework.pagination import LimitOffsetPagination
 
-from posts.models import Post, Comment, Group, Follow
+from posts.models import Post, Group, Follow
 from .serializers import (PostSerializer, CommentSerializer, GroupSerializer,
                           FollowSerializer)
 from .permissions import OnlyAuthorPutPatchDelete, FollowPermissions
@@ -19,13 +19,7 @@ class PostViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
 
     def perform_create(self, serializer):
-        if self.request.data.get('group'):
-            group_id = self.request.data.get('group')
-            group = get_object_or_404(Group, id=group_id)
-            serializer.save(author=self.request.user,
-                            group=group)
-        else:
-            serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -33,9 +27,10 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
 
     def get_queryset(self):
-        post_id = self.kwargs.get('post_id')
-        get_object_or_404(Post, id=post_id)
-        return Comment.objects.filter(post=post_id)
+        return get_object_or_404(
+            Post,
+            id=self.kwargs.get('post_id')
+        ).comments.all()
 
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
